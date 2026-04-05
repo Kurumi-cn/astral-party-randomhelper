@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>星引擎 PVE 随机助手</title>
+	<link rel="icon" href="images/icons/icon.png" type="image/png">
+    <style>
+        body { 
+            /* 读取当前目录 images 下的 background.png */
+            background-image: url('images/background.png'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-color: #333;
+            
+            color: white; 
+            font-family: "Microsoft YaHei", sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            scroll-behavior: smooth; 
+        }
+
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: rgba(68, 68, 68, 0.88);
+            backdrop-filter: blur(5px);
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5); 
+            position: relative; 
+        }
+
+        .tabs { 
+            display: flex; 
+			align-items: center;
+            gap: 10px; 
+            margin-bottom: 20px; 
+            border-bottom: 2px solid #555; 
+            padding-bottom: 10px; 
+            flex-wrap: wrap; 
+            position: sticky; 
+            top: 0; 
+            background: rgba(68, 68, 68, 0.95); 
+            z-index: 100; 
+        }
+		/* 右侧文字的专属样式 */
+		.tab-right-text {
+			margin-left: auto;
+			color: #99FF00;
+			font-size: 14px;
+			font-weight: bold;
+			padding-right: 5px;
+			text-shadow: 0 0 5px rgba(153, 255, 0, 0.3);
+			white-space: nowrap;
+}
+        .tab-btn { padding: 12px 24px; background: #555; color: white; border: none; cursor: pointer; border-radius: 4px 4px 0 0; font-size: 16px; font-weight: bold; transition: 0.2s; }
+        .tab-btn:hover { background: #777; }
+        .tab-btn.active { background: #E6007E; color: white; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .row { display: flex; border: 1px solid #777; margin-bottom: 2px; }
+        .row-header { width: 100px; background: #E6007E; display: flex; align-items: center; justify-content: center; font-weight: bold; text-align: center; padding: 10px; flex-shrink: 0; }
+        .row-content { flex-grow: 1; background: rgba(85, 85, 85, 0.6); padding: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+        .tag-checkbox { display: none; }
+        .tag-label { display: inline-block; padding: 6px 14px; background: #E6007E; color: white; border-radius: 4px; cursor: pointer; user-select: none; border: 2px solid transparent; transition: 0.2s; font-size: 14px; }
+        .tag-checkbox:checked + .tag-label { background: #99FF00; color: black; border-color: black; font-weight: bold; }
+
+        .controls-box { background: rgba(58, 58, 58, 0.8); padding: 15px; margin-bottom: 15px; border-radius: 4px; border-left: 5px solid #E6007E; }
+        .controls-box h3 { margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #eee; }
+
+        .small-btn { padding: 6px 12px; background: #222; color: white; border: 1px solid #777; cursor: pointer; border-radius: 4px; margin-right: 8px; margin-bottom: 8px; transition: 0.2s; font-size: 13px; }
+        .small-btn:hover { background: #E6007E; border-color: #E6007E; }
+        .small-btn.highlight { background: #E6007E; border-color: #E6007E; }
+        .small-btn.green { border-color: #99FF00; color: #99FF00; }
+        
+        .action-btn { padding: 12px 30px; font-size: 18px; background: #99FF00; border: 2px solid black; color: black; cursor: pointer; border-radius: 8px; font-weight: bold; box-shadow: 2px 2px 0px black; transition: 0.1s; }
+        .action-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0px black; }
+
+        .share-code-area { 
+            width: 100%; 
+            box-sizing: border-box; 
+            background: #1a1a1a; 
+            color: #99FF00; 
+            border: 1px solid #ffffff; 
+            border-radius: 6px; 
+            padding: 15px; 
+            font-family: 'Consolas', 'Monaco', monospace; 
+            min-height: 150px; 
+            resize: vertical; 
+            margin-top: 10px; 
+            outline: none;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .result-box { margin-top: 20px; padding: 20px; background: rgba(34, 34, 34, 0.9); border: 2px dashed #555; text-align: center; min-height: 300px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .result-box.locked { border-color: #99FF00; transform: scale(1.02); }
+        .result-text { font-size: 26px; font-weight: bold; color: #bbb; margin-bottom: 15px; }
+        .result-box.locked .result-text { color: #99FF00; text-shadow: 0px 0px 10px rgba(153, 255, 0, 0.6); }
+        .result-image { display: none; max-width: 90%; max-height: 250px; border-radius: 8px; border: 2px solid #777; object-fit: cover; }
+        .result-image.visible { display: block; }
+
+        #back-to-top { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: #E6007E; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 999; font-size: 12px; font-weight: bold; border: 2px solid white; text-align: center; }
+        #back-to-top.show { opacity: 0.9; visibility: visible; }
+        #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #E6007E; color: white; padding: 12px 25px; border-radius: 25px; z-index: 1000; opacity: 0; transition: opacity 0.4s; font-weight: bold; pointer-events: none; }
+        #toast.show { opacity: 1; }
+
+        @media screen and (max-width: 768px) {
+            body { padding: 10px; }
+            .tab-btn { flex-grow: 1; padding: 12px 5px; font-size: 13px; }
+            .row { flex-direction: column; border: none; background: rgba(85, 85, 85, 0.8); border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+            .row-header { width: auto; border-bottom: 1px solid #444; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="back-to-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">TOP<br>顶部</div>
+<div id="toast"></div>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-map', this)">地图随机</button>
+        <button class="tab-btn" onclick="switchTab('tab-char', this)">角色随机</button>
+        <button class="tab-btn" onclick="switchTab('tab-settings', this)">预设角色</button>
+		<span class="tab-right-text">作者QQ: 2096317545</span>
+    </div>
+
+    <div id="tab-map" class="tab-content active">
+        <div class="controls-box">
+            <h3>地图控制</h3>
+            <div style="margin-bottom: 10px;">
+                <button class="small-btn" onclick="toggleAllMaps(true)">全选所有地图</button>
+                <button class="small-btn" onclick="toggleAllMaps(false)">清空地图选择</button>
+            </div>
+            <div class="row">
+                <div class="row-header">全部地图</div>
+                <div class="row-content" id="map-list-container"></div>
+            </div>
+        </div>
+        <div class="action-container" style="text-align: center; margin-top: 20px;">
+            <button class="action-btn" onclick="randomizeMap(this)">开始抽取地图</button>
+            <div id="map-result" class="result-box">
+                <span id="map-result-text" class="result-text">等待抽取...</span>
+                <img src="" class="result-image" id="map-result-image">
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-char" class="tab-content">
+        <div class="controls-box">
+            <h3>1. 同步预设</h3>
+            <div style="margin-bottom: 10px;">
+                <button class="small-btn highlight" onclick="syncPreset('support')">同步【辅助】预设池</button>
+                <button class="small-btn highlight" onclick="syncPreset('dps')">同步【输出】预设池</button>
+            </div>
+            <p style="font-size: 13px; color: #aaa;">快捷定位：</p>
+            <label class="p-radio-label"><input type="radio" name="p-num" onchange="syncPreset('support')"> 1P/2P (辅助类)</label>
+            <label class="p-radio-label"><input type="radio" name="p-num" onchange="syncPreset('dps')"> 3P/4P (输出类)</label>
+        </div>
+        <div class="controls-box">
+            <h3>2. 批量微调</h3>
+            <div style="margin-bottom: 10px;">
+                <button class="small-btn" onclick="toggleAllChars(true)">全选所有</button>
+                <button class="small-btn" onclick="toggleAllChars(false)">清空选择</button>
+            </div>
+            <div id="batch-btn-container"></div>
+        </div>
+        <div id="char-list-container"></div>
+        <div class="action-container" style="text-align: center; margin-top: 20px;">
+            <button class="action-btn" onclick="randomizeChar(this)">开始抽取角色</button>
+            <div id="char-result" class="result-box">
+                <span id="char-result-text" class="result-text">等待抽取...</span>
+                <img src="" class="result-image" id="char-result-image">
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-settings" class="tab-content">
+        <div class="controls-box">
+            <h3>自定义辅助角色池 (1P/2P)</h3>
+            <div style="margin-bottom: 10px;">
+                <button class="small-btn green" onclick="toggleSettingsAll('support', true)">全选所有</button>
+                <button class="small-btn" onclick="toggleSettingsAll('support', false)">清空所有</button>
+            </div>
+            <div id="settings-support-batch"></div>
+            <div id="settings-support-list"></div>
+        </div>
+
+        <div class="controls-box">
+            <h3>自定义输出角色池 (3P/4P)</h3>
+            <div style="margin-bottom: 10px;">
+                <button class="small-btn green" onclick="toggleSettingsAll('dps', true)">全选所有</button>
+                <button class="small-btn" onclick="toggleSettingsAll('dps', false)">清空所有</button>
+            </div>
+            <div id="settings-dps-batch"></div>
+            <div id="settings-dps-list"></div>
+        </div>
+
+        <div class="controls-box">
+            <h3>配置导出与同步</h3>
+            <p style="font-size: 13px; color: #aaa; margin-bottom: 10px;">生成后会自动复制，可直接发给队友：</p>
+            <button class="small-btn highlight" onclick="exportSettings()">生成并自动复制识别码</button>
+            <textarea id="share-code-export" class="share-code-area" readonly placeholder="识别码生成区域..."></textarea>
+            
+            <div style="margin-top: 25px; border-top: 1px dashed #555; padding-top: 15px;">
+                <p style="font-size: 13px; color: #aaa; margin-bottom: 10px;">导入队友的识别码：</p>
+                <textarea id="share-code-import" class="share-code-area" placeholder="在此粘贴他人的识别码..."></textarea>
+                <button class="action-btn" onclick="importSettings()" style="width: 100%; margin-top: 15px; font-size: 16px;">覆盖并应用导入配置</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    //JS逻辑(原有不变)
+    const allMaps = [ "星趴·梦想号", "御魂庆典", "水乡古镇", "魔法学院", "龙宫游乐园", "幽魂暗巷", "园林中庭" ];
+    const allRawChars = { 
+        "一期": ["商业之主", "古怪神探", "社恐修女", "暗影忍者", "社员叔叔", "猩红辣妹", "游戏大师", "看板娘", "垃圾箱", "肉蛋战车", "史莱姆", "旗袍娘"], 
+        "二期": ["命运少女", "太刀使", "绿洲女王", "家政机器人", "午夜闪光", "网络魅影"], 
+        "三期": ["暗区少主", "新人调查员", "机械超人", "风水师", "三神御主", "枪匠"], 
+        "四期": ["小猎手", "沼之蛟龙", "毒苹果"], 
+        "联动": ["超天酱", "糖糖", "吉尔", "多萝西"] 
+    };
+    
+    const mapsData = allMaps.map(name => ({ name, image: `images/maps/${name}.png` }));
+    let allCharObjects = [];
+    Object.keys(allRawChars).forEach(p => {
+        allRawChars[p].forEach(name => allCharObjects.push({ name, image: `images/characters/${name}.png`, phase: p }));
+    });
+
+    let customSupportChars = JSON.parse(localStorage.getItem('customSupport')) || ["商业之主", "古怪神探", "游戏大师", "看板娘", "史莱姆", "命运少女", "暗区少主", "风水师", "三神御主", "沼之蛟龙", "毒苹果", "超天酱", "吉尔"];
+    let customDpsChars = JSON.parse(localStorage.getItem('customDps')) || ["社恐修女", "暗影忍者", "社员叔叔", "猩红辣妹", "看板娘", "垃圾箱", "肉蛋战车", "旗袍娘", "太刀使", "绿洲女王", "家政机器人", "午夜闪光", "网络魅影", "新人调查员", "机械超人", "三神御主", "枪匠", "小猎手", "沼之蛟龙", "毒苹果", "糖糖", "多萝西"];
+
+    window.onscroll = () => {
+        const topBtn = document.getElementById('back-to-top');
+        (document.documentElement.scrollTop > 300) ? topBtn.classList.add('show') : topBtn.classList.remove('show');
+    };
+
+    window.onload = () => {
+        const mapBox = document.getElementById('map-list-container');
+        mapsData.forEach((m, i) => {
+            mapBox.innerHTML += `<div><input type="checkbox" id="m-${i}" class="map-checkbox tag-checkbox" value="${m.name}" checked><label for="m-${i}" class="tag-label">${m.name}</label></div>`;
+        });
+        const charBox = document.getElementById('char-list-container');
+        const batchBox = document.getElementById('batch-btn-container');
+        Object.keys(allRawChars).forEach(phase => {
+            batchBox.innerHTML += `<button class="small-btn" onclick="togglePhase('${phase}')">选/不选 ${phase}</button>`;
+            let row = `<div class="row"><div class="row-header">${phase}</div><div class="row-content">`;
+            allCharObjects.filter(c => c.phase === phase).forEach(c => {
+                const id = `c-${c.name.replace(/\s/g, '')}`;
+                row += `<div><input type="checkbox" id="${id}" class="char-checkbox tag-checkbox" value="${c.name}" data-phase="${phase}"><label for="${id}" class="tag-label">${c.name}</label></div>`;
+            });
+            charBox.innerHTML += row + `</div></div>`;
+        });
+        renderSettingsLists();
+    };
+
+    function renderSettingsLists() {
+        const sList = document.getElementById('settings-support-list');
+        const dList = document.getElementById('settings-dps-list');
+        const sBatch = document.getElementById('settings-support-batch');
+        const dBatch = document.getElementById('settings-dps-batch');
+        sList.innerHTML = ''; dList.innerHTML = ''; sBatch.innerHTML = ''; dBatch.innerHTML = '';
+        Object.keys(allRawChars).forEach(phase => {
+            sBatch.innerHTML += `<button class="small-btn" onclick="toggleSettingsPhase('${phase}', 'support')">选/不选 ${phase}</button>`;
+            dBatch.innerHTML += `<button class="small-btn" onclick="toggleSettingsPhase('${phase}', 'dps')">选/不选 ${phase}</button>`;
+            let sRow = `<div class="row"><div class="row-header">${phase}</div><div class="row-content">`;
+            let dRow = `<div class="row"><div class="row-header">${phase}</div><div class="row-content">`;
+            allCharObjects.filter(c => c.phase === phase).forEach(c => {
+                const sId = `s-set-${c.name}`; const dId = `d-set-${c.name}`;
+                sRow += `<div><input type="checkbox" id="${sId}" class="set-cb-support tag-checkbox" data-phase="${phase}" value="${c.name}" onchange="updatePreset('support','${c.name}',this.checked)" ${customSupportChars.includes(c.name)?'checked':''}><label for="${sId}" class="tag-label">${c.name}</label></div>`;
+                dRow += `<div><input type="checkbox" id="${dId}" class="set-cb-dps tag-checkbox" data-phase="${phase}" value="${c.name}" onchange="updatePreset('dps','${c.name}',this.checked)" ${customDpsChars.includes(c.name)?'checked':''}><label for="${dId}" class="tag-label">${c.name}</label></div>`;
+            });
+            sList.innerHTML += sRow + `</div></div>`; dList.innerHTML += dRow + `</div></div>`;
+        });
+    }
+
+    function switchTab(id, btn) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active'); btn.classList.add('active');
+    }
+
+    function syncPreset(type) {
+        const list = (type === 'support') ? customSupportChars : customDpsChars;
+        document.querySelectorAll('.char-checkbox').forEach(cb => cb.checked = list.includes(cb.value));
+        showToast(`已同步【${type==='support'?'辅助':'输出'}】预设池`);
+    }
+
+    function toggleAllMaps(s) { document.querySelectorAll('.map-checkbox').forEach(c => c.checked = s); }
+    function toggleAllChars(s) { document.querySelectorAll('.char-checkbox').forEach(c => c.checked = s); }
+    function togglePhase(p) {
+        const cbs = document.querySelectorAll(`.char-checkbox[data-phase="${p}"]`);
+        const all = Array.from(cbs).every(c => c.checked);
+        cbs.forEach(c => c.checked = !all);
+    }
+
+    function toggleSettingsAll(type, s) {
+        document.querySelectorAll(`.set-cb-${type}`).forEach(cb => {
+            cb.checked = s; updatePreset(type, cb.value, s, true);
+        });
+        showToast(`已${s?'全选':'清空'}预设列表`);
+    }
+
+    function toggleSettingsPhase(p, t) {
+        const cbs = document.querySelectorAll(`.set-cb-${t}[data-phase="${p}"]`);
+        const all = Array.from(cbs).every(c => c.checked);
+        cbs.forEach(cb => { cb.checked = !all; updatePreset(t, cb.value, !all, true); });
+        showToast(`已批量更新 ${p}`);
+    }
+
+    function updatePreset(t, name, s, silent = false) {
+        let arr = (t === 'support') ? customSupportChars : customDpsChars;
+        const i = arr.indexOf(name);
+        if(s && i === -1) arr.push(name); else if(!s && i > -1) arr.splice(i, 1);
+        localStorage.setItem(t === 'support' ? 'customSupport' : 'customDps', JSON.stringify(arr));
+        if(!silent) showToast('预设已保存');
+    }
+
+    function exportSettings() {
+        const area = document.getElementById('share-code-export');
+        const code = btoa(unescape(encodeURIComponent(JSON.stringify({s: customSupportChars, d: customDpsChars}))));
+        area.value = code;
+        area.select(); area.setSelectionRange(0, 99999); 
+        try {
+            navigator.clipboard.writeText(code).then(() => showToast('已生成并自动复制！'));
+        } catch (e) {
+            document.execCommand('copy'); showToast('已生成并复制！');
+        }
+    }
+
+    function importSettings() {
+        try {
+            const raw = document.getElementById('share-code-import').value.trim();
+            if(!raw) return showToast('请输入识别码', true);
+            const data = JSON.parse(decodeURIComponent(escape(atob(raw))));
+            customSupportChars = data.s; customDpsChars = data.d;
+            localStorage.setItem('customSupport', JSON.stringify(customSupportChars));
+            localStorage.setItem('customDps', JSON.stringify(customDpsChars));
+            renderSettingsLists();
+            showToast('配置导入成功！');
+        } catch(e) { showToast('识别码无效', true); }
+    }
+
+    function showToast(m, err=false) {
+        const t = document.getElementById('toast');
+        t.textContent = m; t.style.background = err ? '#D32F2F' : '#E6007E';
+        t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    function runRouletteAnimation(btn, boxId, txtId, imgId, options, sP, fP) {
+        const box = document.getElementById(boxId), txt = document.getElementById(txtId), img = document.getElementById(imgId);
+        if(!options.length) return showToast("未勾选任何选项", true);
+        btn.disabled = true; box.classList.remove("locked"); img.classList.add("visible");
+        let d = 70;
+        const tick = () => {
+            const item = options[Math.floor(Math.random()*options.length)];
+            txt.innerText = sP + item.name; img.src = item.image;
+            if(d < 450) { d *= 1.12; setTimeout(tick, d); }
+            else { box.classList.add("locked"); txt.innerText = fP + item.name; btn.disabled = false; }
+        };
+        tick();
+    }
+    function randomizeMap(b) {
+        const names = Array.from(document.querySelectorAll('.map-checkbox:checked')).map(c => c.value);
+        runRouletteAnimation(b, 'map-result', 'map-result-text', 'map-result-image', mapsData.filter(m => names.includes(m.name)), "正在选择：", "随机完毕：");
+    }
+    function randomizeChar(b) {
+        const names = Array.from(document.querySelectorAll('.char-checkbox:checked')).map(c => c.value);
+        runRouletteAnimation(b, 'char-result', 'char-result-text', 'char-result-image', allCharObjects.filter(c => names.includes(c.name)), "正在选择：", "随机完毕：");
+    }
+</script>
+</body>
+</html>
