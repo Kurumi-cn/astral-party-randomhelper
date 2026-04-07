@@ -104,9 +104,11 @@
     <div id="tab-map" class="tab-content active">
         <div class="controls-box">
             <h3>地图控制</h3>
-            <div style="margin-bottom: 10px;">
-                <button class="small-btn" onclick="toggleAllMaps(true)">全选所有地图</button>
-                <button class="small-btn" onclick="toggleAllMaps(false)">清空地图选择</button>
+            <div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+                <button class="small-btn" style="margin-bottom: 0;" onclick="toggleAllMaps(true)">全选所有地图</button>
+                <button class="small-btn" style="margin-bottom: 0;" onclick="toggleAllMaps(false)">清空地图选择</button>
+                <label style="font-size: 14px; cursor: pointer; color: #ddd;"><input type="checkbox" id="map-no-repeat"> 避免地图重复</label>
+                <label style="font-size: 14px; cursor: pointer; color: #ddd;"><input type="checkbox" id="map-difficulty"> 增加随机难度</label>
             </div>
             <div class="row">
                 <div class="row-header">全部地图</div>
@@ -204,6 +206,10 @@
     Object.keys(allRawChars).forEach(p => {
         allRawChars[p].forEach(name => allCharObjects.push({ name, image: `images/characters/${name}.png`, phase: p }));
     });
+
+    // 新增：用于记录上次抽取的地图及难度选项
+    let lastRolledMap = null;
+    const difficulties = ["简单", "困难", "噩梦", "疯狂"];
 
     // 初始化逻辑：只有当缓存中有且长度大于0才使用，否则强制加载默认
     function getStoredData(key, defaultData) {
@@ -328,23 +334,53 @@
         t.textContent = m; t.style.background = err ? '#D32F2F' : '#E6007E';
         t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000);
     }
-    function runRouletteAnimation(btn, boxId, txtId, imgId, options, sP, fP) {
+
+    function runRouletteAnimation(btn, boxId, txtId, imgId, options, sP, fP, onComplete = null, formatName = null) {
         const box = document.getElementById(boxId), txt = document.getElementById(txtId), img = document.getElementById(imgId);
         if(!options.length) return showToast("未勾选任何选项", true);
         btn.disabled = true; box.classList.remove("locked"); img.classList.add("visible");
         let d = 70;
         const tick = () => {
             const item = options[Math.floor(Math.random()*options.length)];
-            txt.innerText = sP + item.name; img.src = item.image;
-            if(d < 450) { d *= 1.12; setTimeout(tick, d); }
-            else { box.classList.add("locked"); txt.innerText = fP + item.name; btn.disabled = false; }
+            const displayName = formatName ? formatName(item.name) : item.name;
+            txt.innerText = sP + displayName; img.src = item.image;
+            if(d < 450) { 
+                d *= 1.12; setTimeout(tick, d); 
+            } else { 
+                box.classList.add("locked"); 
+                txt.innerText = fP + displayName; 
+                btn.disabled = false; 
+                if(onComplete) onComplete(item.name);
+            }
         };
         tick();
     }
+
     function randomizeMap(b) {
         const names = Array.from(document.querySelectorAll('.map-checkbox:checked')).map(c => c.value);
-        runRouletteAnimation(b, 'map-result', 'map-result-text', 'map-result-image', mapsData.filter(m => names.includes(m.name)), "正在选择：", "随机完毕：");
+        let availableMaps = mapsData.filter(m => names.includes(m.name));
+        
+        //避免连续重，可选地图大于1个时才生效，避免死锁
+        const noRepeat = document.getElementById('map-no-repeat').checked;
+        if (noRepeat && availableMaps.length > 1 && lastRolledMap) {
+            availableMaps = availableMaps.filter(m => m.name !== lastRolledMap);
+        }
+
+        //随机难度
+        const addDifficulty = document.getElementById('map-difficulty').checked;
+        const formatName = (baseName) => {
+            if (!addDifficulty) return baseName;
+            const diff = difficulties[Math.floor(Math.random() * difficulties.length)];
+            return baseName + "·" + diff;
+        };
+
+        const onComplete = (finalBaseName) => {
+            lastRolledMap = finalBaseName; //记录，防重复判断
+        };
+
+        runRouletteAnimation(b, 'map-result', 'map-result-text', 'map-result-image', availableMaps, "正在选择：", "随机完毕：", onComplete, formatName);
     }
+    
     function randomizeChar(b) {
         const names = Array.from(document.querySelectorAll('.char-checkbox:checked')).map(c => c.value);
         runRouletteAnimation(b, 'char-result', 'char-result-text', 'char-result-image', allCharObjects.filter(c => names.includes(c.name)), "正在选择：", "随机完毕：");
