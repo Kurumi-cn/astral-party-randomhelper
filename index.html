@@ -86,6 +86,27 @@
             .row { flex-direction: column; border: none; background: rgba(85, 85, 85, 0.8); border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
             .row-header { width: auto; border-bottom: 1px solid #444; }
         }
+
+        .team-config-row { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; }
+        .player-setup { background: rgba(34, 34, 34, 0.8); border: 1px solid #555; padding: 10px 15px; border-radius: 6px; flex-grow: 1; text-align: center; }
+        .player-setup span { color: #E6007E; font-weight: bold; margin-right: 10px; font-size: 16px; }
+        .player-setup select { background: #222; color: #99FF00; border: 1px solid #777; padding: 5px; border-radius: 4px; outline: none; font-weight: bold; cursor: pointer; }
+        
+        .team-result-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; width: 100%; }
+        .team-slot { background: rgba(34, 34, 34, 0.9); border: 2px dashed #555; border-radius: 8px; padding: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; transition: 0.2s; }
+        .team-slot.locked { border-color: #99FF00; background: rgba(50, 50, 50, 0.9); box-shadow: 0 0 15px rgba(153, 255, 0, 0.2); }
+        .team-slot .result-text { font-size: 16px; margin-bottom: 10px; }
+        .team-slot .result-image { max-height: 120px; max-width: 100%; border-width: 1px; }
+
+        @media screen and (max-width: 768px) {
+            .team-result-container { grid-template-columns: repeat(2, 1fr); }
+        }
+		
+		.team-slot.locked .result-text {color: #99FF00; text-shadow: 0px 0px 8px rgba(153, 255, 0, 0.5);
+}
+
+		.team-slot.locked span[id^="team-status-"] {color: #99FF00 !important; opacity: 0.8;
+}
     </style>
 </head>
 <body>
@@ -97,8 +118,9 @@
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('tab-map', this)">地图随机</button>
         <button class="tab-btn" onclick="switchTab('tab-char', this)">角色随机</button>
+		<button class="tab-btn" onclick="switchTab('tab-team', this)">全员随机</button>
         <button class="tab-btn" onclick="switchTab('tab-settings', this)">预设角色</button>
-        <span class="tab-right-text">作者QQ: 2096317545</span>
+        <span class="tab-right-text">QQ: 2096317545</span>
     </div>
 
     <div id="tab-map" class="tab-content active">
@@ -152,7 +174,74 @@
             </div>
         </div>
     </div>
+	
+	<div id="tab-team" class="tab-content">
+        <div class="controls-box">
+            <h3>职责划分</h3>
+            <div style="margin-bottom: 15px;">
+                <p style="font-size: 13px; color: #aaa; margin-top: 0;">本随机池将自动同步"预设角色"页面中的角色配置。</p>
+            </div>
+            
+            <div class="team-config-row">
+                <div class="player-setup">
+                    <span>1P</span>
+                    <select id="p1-role">
+                        <option value="support" selected>辅助角色池</option>
+                        <option value="dps">输出角色池</option>
+                    </select>
+                </div>
+                <div class="player-setup">
+                    <span>2P</span>
+                    <select id="p2-role">
+                        <option value="support" selected>辅助角色池</option>
+                        <option value="dps">输出角色池</option>
+                    </select>
+                </div>
+                <div class="player-setup">
+                    <span>3P</span>
+                    <select id="p3-role">
+                        <option value="support">辅助角色池</option>
+                        <option value="dps" selected>输出角色池</option>
+                    </select>
+                </div>
+                <div class="player-setup">
+                    <span>4P</span>
+                    <select id="p4-role">
+                        <option value="support">辅助角色池</option>
+                        <option value="dps" selected>输出角色池</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
+        <div class="action-container" style="text-align: center; margin-top: 20px;">
+            <button class="action-btn" onclick="randomizeTeam(this)" style="padding: 15px 40px; font-size: 22px;">开始全队抽取</button>
+            
+            <div class="team-result-container">
+                <div id="team-slot-1" class="team-slot">
+                    <span id="team-status-1" class="result-text" style="color:#aaa; font-size: 14px;">1P 等待中</span>
+                    <span id="team-txt-1" class="result-text">---</span>
+                    <img src="" class="result-image" id="team-img-1">
+                </div>
+                <div id="team-slot-2" class="team-slot">
+                    <span id="team-status-2" class="result-text" style="color:#aaa; font-size: 14px;">2P 等待中</span>
+                    <span id="team-txt-2" class="result-text">---</span>
+                    <img src="" class="result-image" id="team-img-2">
+                </div>
+                <div id="team-slot-3" class="team-slot">
+                    <span id="team-status-3" class="result-text" style="color:#aaa; font-size: 14px;">3P 等待中</span>
+                    <span id="team-txt-3" class="result-text">---</span>
+                    <img src="" class="result-image" id="team-img-3">
+                </div>
+                <div id="team-slot-4" class="team-slot">
+                    <span id="team-status-4" class="result-text" style="color:#aaa; font-size: 14px;">4P 等待中</span>
+                    <span id="team-txt-4" class="result-text">---</span>
+                    <img src="" class="result-image" id="team-img-4">
+                </div>
+            </div>
+        </div>
+    </div>
+	
     <div id="tab-settings" class="tab-content">
         <div class="controls-box">
             <h3>自定义辅助角色池 (1P/2P)</h3>
@@ -197,7 +286,7 @@
         "联动": ["超天酱", "糖糖", "吉尔", "多萝西"] 
     };
     
-    // 默认名单（硬编码）
+    //默认名单
     const defaultSupportChars = ["商业之主", "古怪神探", "游戏大师", "看板娘", "史莱姆", "命运少女", "暗区少主", "风水师", "三神御主", "沼之蛟龙", "毒苹果", "超天酱", "吉尔"];
     const defaultDpsChars = ["社恐修女", "暗影忍者", "社员叔叔", "猩红辣妹", "看板娘", "垃圾箱", "肉蛋战车", "旗袍娘", "太刀使", "绿洲女王", "家政机器人", "午夜闪光", "网络魅影", "新人调查员", "机械超人", "三神御主", "枪匠", "小猎手", "沼之蛟龙", "毒苹果", "糖糖", "多萝西"];
 
@@ -207,11 +296,9 @@
         allRawChars[p].forEach(name => allCharObjects.push({ name, image: `images/characters/${name}.png`, phase: p }));
     });
 
-    // 新增：用于记录上次抽取的地图及难度选项
     let lastRolledMap = null;
     const difficulties = ["简单", "困难", "噩梦", "疯狂"];
 
-    // 初始化逻辑：只有当缓存中有且长度大于0才使用，否则强制加载默认
     function getStoredData(key, defaultData) {
         try {
             const stored = JSON.parse(localStorage.getItem(key));
@@ -360,13 +447,11 @@
         const names = Array.from(document.querySelectorAll('.map-checkbox:checked')).map(c => c.value);
         let availableMaps = mapsData.filter(m => names.includes(m.name));
         
-        //避免连续重，可选地图大于1个时才生效，避免死锁
         const noRepeat = document.getElementById('map-no-repeat').checked;
         if (noRepeat && availableMaps.length > 1 && lastRolledMap) {
             availableMaps = availableMaps.filter(m => m.name !== lastRolledMap);
         }
 
-        //随机难度
         const addDifficulty = document.getElementById('map-difficulty').checked;
         const formatName = (baseName) => {
             if (!addDifficulty) return baseName;
@@ -375,7 +460,7 @@
         };
 
         const onComplete = (finalBaseName) => {
-            lastRolledMap = finalBaseName; //记录，防重复判断
+            lastRolledMap = finalBaseName; 
         };
 
         runRouletteAnimation(b, 'map-result', 'map-result-text', 'map-result-image', availableMaps, "正在选择：", "随机完毕：", onComplete, formatName);
@@ -384,6 +469,75 @@
     function randomizeChar(b) {
         const names = Array.from(document.querySelectorAll('.char-checkbox:checked')).map(c => c.value);
         runRouletteAnimation(b, 'char-result', 'char-result-text', 'char-result-image', allCharObjects.filter(c => names.includes(c.name)), "正在选择：", "随机完毕：");
+    }
+	
+    function randomizeTeam(btn) {
+        const supportPool = allCharObjects.filter(c => customSupportChars.includes(c.name));
+        const dpsPool = allCharObjects.filter(c => customDpsChars.includes(c.name));
+
+        //统计当前四个位置需要的辅助和输出数量（先计算腐竹输出的总数，为后续和对数量做准备，
+        let reqSupport = 0;
+        let reqDps = 0;
+        const roles = [1, 2, 3, 4].map(i => {
+            const r = document.getElementById(`p${i}-role`).value;
+            if (r === 'support') reqSupport++;
+            else reqDps++;
+            return r;
+        });
+
+        //数量校验
+        if(supportPool.length < reqSupport) return showToast(`【辅助角色池】数量不足！需要${reqSupport}名，当前预设仅选了${supportPool.length}名。`, true);
+        if(dpsPool.length < reqDps) return showToast(`【输出角色池】数量不足！需要${reqDps}名，当前预设仅选了${dpsPool.length}名。`, true);
+
+        btn.disabled = true;
+
+        const slots = [1, 2, 3, 4].map(i => {
+            const role = roles[i-1];
+            const pool = (role === 'support') ? supportPool : dpsPool;
+            const box = document.getElementById(`team-slot-${i}`);
+            const img = document.getElementById(`team-img-${i}`);
+            const txt = document.getElementById(`team-txt-${i}`);
+            const statusTxt = document.getElementById(`team-status-${i}`);
+            
+            box.classList.remove('locked');
+            img.classList.add('visible');
+            return { pool, box, img, txt, statusTxt, id: i };
+        });
+
+        let d = 70;
+
+        const tick = () => {
+
+            let usedNames = new Set(); 
+
+            slots.forEach(s => {
+                //剔除已被选中的
+                let available = s.pool.filter(item => !usedNames.has(item.name));
+                const item = available[Math.floor(Math.random() * available.length)];
+                
+                usedNames.add(item.name); //被占用
+                
+                s.img.src = item.image;
+                s.txt.innerText = item.name;
+                s.statusTxt.innerText = `${s.id}P 正在选择...`;
+                s.finalItem = item;
+            });
+
+            if(d < 450) { 
+                d *= 1.12; // 逐渐减速
+                setTimeout(tick, d); 
+            } else { 
+                // 动画结束，锁定状态
+                slots.forEach(s => {
+                    s.box.classList.add('locked');
+                    s.txt.innerText = s.finalItem.name;
+                    s.statusTxt.innerText = `${s.id}P 随机完毕`; // 最终状态文字
+                });
+                btn.disabled = false;
+                showToast("队伍组建完毕！");
+            }
+        };
+        tick();
     }
 </script>
 </body>
