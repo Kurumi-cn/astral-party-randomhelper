@@ -298,7 +298,21 @@
 
     let lastRolledMap = null;
     const difficulties = ["简单", "困难", "噩梦", "疯狂"];
+	//预加载
+	function preloadAssets() {
+        console.log("正在后台预加载图片资源...");
+        const allImages = [
+            ...mapsData.map(m => m.image),
+            ...allCharObjects.map(c => c.image)
+        ];
 
+        allImages.forEach(src => {
+            const img = new Image();
+            img.src = src;
+        });
+        console.log(`已成功启动 ${allImages.length} 张图片的静默预加载`);
+    }
+	
     function getStoredData(key, defaultData) {
         try {
             const stored = JSON.parse(localStorage.getItem(key));
@@ -333,6 +347,7 @@
             charBox.innerHTML += row + `</div></div>`;
         });
         renderSettingsLists();
+		setTimeout(preloadAssets, 1000);
     };
 
     function renderSettingsLists() {
@@ -485,7 +500,8 @@
             return r;
         });
 
-        //数量校验
+        //数量校验 
+		
         if(supportPool.length < reqSupport) return showToast(`【辅助角色池】数量不足！需要${reqSupport}名，当前预设仅选了${supportPool.length}名。`, true);
         if(dpsPool.length < reqDps) return showToast(`【输出角色池】数量不足！需要${reqDps}名，当前预设仅选了${dpsPool.length}名。`, true);
 
