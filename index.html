@@ -54,6 +54,14 @@
         .tab-btn { padding: 12px 24px; background: #555; color: white; border: none; cursor: pointer; border-radius: 4px 4px 0 0; font-size: 16px; font-weight: bold; transition: 0.2s; }
         .tab-btn:hover { background: #777; }
         .tab-btn.active { background: #E6007E; color: white; }
+
+        .sub-tabs { display: flex; gap: 5px; border-bottom: 2px solid #E6007E; margin-bottom: 15px; }
+        .sub-tab-btn { padding: 8px 20px; background: #333; color: #ccc; border: none; cursor: pointer; border-radius: 4px 4px 0 0; font-weight: bold; transition: 0.2s; }
+        .sub-tab-btn:hover { background: #555; }
+        .sub-tab-btn.active { background: #E6007E; color: white; }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; }
+
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .row { display: flex; border: 1px solid #777; margin-bottom: 2px; }
@@ -81,17 +89,18 @@
         #back-to-top.show { opacity: 0.9; visibility: visible; }
         #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #E6007E; color: white; padding: 12px 25px; border-radius: 25px; z-index: 1000; opacity: 0; transition: opacity 0.4s; font-weight: bold; pointer-events: none; }
         #toast.show { opacity: 1; }
+        
+        .radio-group { display: flex; gap: 20px; margin-top: 10px; flex-wrap: wrap; }
+        .radio-label { cursor: pointer; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        .radio-label input[type="radio"] { cursor: pointer; width: 18px; height: 18px; accent-color: #E6007E; }
+
         @media screen and (max-width: 768px) {
             .tab-btn { flex-grow: 1; padding: 12px 5px; font-size: 13px; }
             .row { flex-direction: column; border: none; background: rgba(85, 85, 85, 0.8); border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
             .row-header { width: auto; border-bottom: 1px solid #444; }
+            .sub-tab-btn { padding: 8px 10px; font-size: 13px; flex-grow: 1; text-align: center; }
         }
 
-        .team-config-row { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; }
-        .player-setup { background: rgba(34, 34, 34, 0.8); border: 1px solid #555; padding: 10px 15px; border-radius: 6px; flex-grow: 1; text-align: center; }
-        .player-setup span { color: #E6007E; font-weight: bold; margin-right: 10px; font-size: 16px; }
-        .player-setup select { background: #222; color: #99FF00; border: 1px solid #777; padding: 5px; border-radius: 4px; outline: none; font-weight: bold; cursor: pointer; }
-        
         .team-result-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; width: 100%; }
         .team-slot { background: rgba(34, 34, 34, 0.9); border: 2px dashed #555; border-radius: 8px; padding: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; transition: 0.2s; }
         .team-slot.locked { border-color: #99FF00; background: rgba(50, 50, 50, 0.9); box-shadow: 0 0 15px rgba(153, 255, 0, 0.2); }
@@ -101,12 +110,8 @@
         @media screen and (max-width: 768px) {
             .team-result-container { grid-template-columns: repeat(2, 1fr); }
         }
-		
-		.team-slot.locked .result-text {color: #99FF00; text-shadow: 0px 0px 8px rgba(153, 255, 0, 0.5);
-}
-
-		.team-slot.locked span[id^="team-status-"] {color: #99FF00 !important; opacity: 0.8;
-}
+        .team-slot.locked .result-text {color: #99FF00; text-shadow: 0px 0px 8px rgba(153, 255, 0, 0.5); }
+        .team-slot.locked span[id^="team-status-"] {color: #99FF00 !important; opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -116,10 +121,10 @@
 
 <div class="container">
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('tab-map', this)">地图随机</button>
-        <button class="tab-btn" onclick="switchTab('tab-char', this)">角色随机</button>
-		<button class="tab-btn" onclick="switchTab('tab-team', this)">全员随机</button>
-        <button class="tab-btn" onclick="switchTab('tab-settings', this)">预设角色</button>
+        <button id="btn-map" class="tab-btn active" onclick="switchTab('tab-map', this)">地图随机</button>
+        <button id="btn-char" class="tab-btn" onclick="switchTab('tab-char', this)">角色随机</button>
+        <button id="btn-team" class="tab-btn" onclick="switchTab('tab-team', this)">全员随机</button>
+        <button id="btn-settings" class="tab-btn" onclick="switchTab('tab-settings', this)">预设角色</button>
         <span class="tab-right-text">QQ: 2096317545</span>
     </div>
 
@@ -148,24 +153,15 @@
 
     <div id="tab-char" class="tab-content">
         <div class="controls-box">
-            <h3>1. 同步预设</h3>
-            <div style="margin-bottom: 10px;">
-                <button class="small-btn highlight" onclick="syncPreset('support')">同步【辅助】自定义池</button>
-                <button class="small-btn highlight" onclick="syncPreset('dps')">同步【输出】自定义池</button>
+            <h3>选择你的位置</h3>
+            <p style="font-size: 13px; color: #aaa; margin-top: 0;">抽取时，将自动读取并使用【预设角色】页面中对应玩家位置的预设卡池。</p>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="single-role-pos" value="p1" checked> 1P</label>
+                <label class="radio-label"><input type="radio" name="single-role-pos" value="p2"> 2P</label>
+                <label class="radio-label"><input type="radio" name="single-role-pos" value="p3"> 3P</label>
+                <label class="radio-label"><input type="radio" name="single-role-pos" value="p4"> 4P</label>
             </div>
-            <p style="font-size: 13px; color: #aaa;">系统默认推荐名单：</p>
-            <label class="p-radio-label"><input type="radio" name="p-num" onclick="syncDefault('support')"> 1P/2P (推荐辅助)</label>
-            <label class="p-radio-label"><input type="radio" name="p-num" onclick="syncDefault('dps')"> 3P/4P (推荐输出)</label>
         </div>
-        <div class="controls-box">
-            <h3>2. 批量微调</h3>
-            <div style="margin-bottom: 10px;">
-                <button class="small-btn" onclick="toggleAllChars(true)">全选所有</button>
-                <button class="small-btn" onclick="toggleAllChars(false)">清空选择</button>
-            </div>
-            <div id="batch-btn-container"></div>
-        </div>
-        <div id="char-list-container"></div>
         <div class="action-container" style="text-align: center; margin-top: 20px;">
             <button class="action-btn" onclick="randomizeChar(this)">开始抽取角色</button>
             <div id="char-result" class="result-box">
@@ -174,44 +170,11 @@
             </div>
         </div>
     </div>
-	
-	<div id="tab-team" class="tab-content">
+    
+    <div id="tab-team" class="tab-content">
         <div class="controls-box">
-            <h3>职责划分</h3>
-            <div style="margin-bottom: 15px;">
-                <p style="font-size: 13px; color: #aaa; margin-top: 0;">本随机池将自动同步"预设角色"页面中的角色配置。</p>
-            </div>
-            
-            <div class="team-config-row">
-                <div class="player-setup">
-                    <span>1P</span>
-                    <select id="p1-role">
-                        <option value="support" selected>辅助角色池</option>
-                        <option value="dps">输出角色池</option>
-                    </select>
-                </div>
-                <div class="player-setup">
-                    <span>2P</span>
-                    <select id="p2-role">
-                        <option value="support" selected>辅助角色池</option>
-                        <option value="dps">输出角色池</option>
-                    </select>
-                </div>
-                <div class="player-setup">
-                    <span>3P</span>
-                    <select id="p3-role">
-                        <option value="support">辅助角色池</option>
-                        <option value="dps" selected>输出角色池</option>
-                    </select>
-                </div>
-                <div class="player-setup">
-                    <span>4P</span>
-                    <select id="p4-role">
-                        <option value="support">辅助角色池</option>
-                        <option value="dps" selected>输出角色池</option>
-                    </select>
-                </div>
-            </div>
+            <h3>职责与位置划分</h3>
+            <p style="font-size: 13px; color: #aaa; margin-top: 0;">点击抽取后，将自动根据【预设角色】页面中 1P、2P、3P、4P 各自配置的独立卡池进行全队不重复抽取。Ciallo～(∠・ω< )⌒☆</p>
         </div>
 
         <div class="action-container" style="text-align: center; margin-top: 20px;">
@@ -241,34 +204,64 @@
             </div>
         </div>
     </div>
-	
+    
     <div id="tab-settings" class="tab-content">
         <div class="controls-box">
-            <h3>自定义辅助角色池 (1P/2P)</h3>
-            <div style="margin-bottom: 10px;">
-                <button class="small-btn green" onclick="toggleSettingsAll('support', true)">全选所有</button>
-                <button class="small-btn" onclick="toggleSettingsAll('support', false)">清空所有</button>
+            <h3>自定义全部位置玩家角色池</h3>
+            <div class="sub-tabs">
+                <button id="sbtn-p1" class="sub-tab-btn active" onclick="switchSettingsTab('p1', this)">1P 角色池</button>
+                <button id="sbtn-p2" class="sub-tab-btn" onclick="switchSettingsTab('p2', this)">2P 角色池</button>
+                <button id="sbtn-p3" class="sub-tab-btn" onclick="switchSettingsTab('p3', this)">3P 角色池</button>
+                <button id="sbtn-p4" class="sub-tab-btn" onclick="switchSettingsTab('p4', this)">4P 角色池</button>
             </div>
-            <div id="settings-support-batch"></div>
-            <div id="settings-support-list"></div>
-        </div>
 
-        <div class="controls-box">
-            <h3>自定义输出角色池 (3P/4P)</h3>
-            <div style="margin-bottom: 10px;">
-                <button class="small-btn green" onclick="toggleSettingsAll('dps', true)">全选所有</button>
-                <button class="small-btn" onclick="toggleSettingsAll('dps', false)">清空所有</button>
+            <div id="settings-area-p1" class="sub-tab-content active">
+                <div style="margin-bottom: 10px;">
+                    <button class="small-btn green" onclick="toggleSettingsAll('p1', true)">全选所有</button>
+                    <button class="small-btn" onclick="toggleSettingsAll('p1', false)">清空所有</button>
+                    <button class="small-btn highlight" onclick="loadDefaultToPos('p1', 'support')" style="float: right;">载入系统推荐 (辅助)</button>
+                </div>
+                <div id="settings-p1-batch"></div>
+                <div id="settings-p1-list"></div>
             </div>
-            <div id="settings-dps-batch"></div>
-            <div id="settings-dps-list"></div>
+
+            <div id="settings-area-p2" class="sub-tab-content">
+                <div style="margin-bottom: 10px;">
+                    <button class="small-btn green" onclick="toggleSettingsAll('p2', true)">全选所有</button>
+                    <button class="small-btn" onclick="toggleSettingsAll('p2', false)">清空所有</button>
+                    <button class="small-btn highlight" onclick="loadDefaultToPos('p2', 'support')" style="float: right;">载入系统推荐 (辅助)</button>
+                </div>
+                <div id="settings-p2-batch"></div>
+                <div id="settings-p2-list"></div>
+            </div>
+
+            <div id="settings-area-p3" class="sub-tab-content">
+                <div style="margin-bottom: 10px;">
+                    <button class="small-btn green" onclick="toggleSettingsAll('p3', true)">全选所有</button>
+                    <button class="small-btn" onclick="toggleSettingsAll('p3', false)">清空所有</button>
+                    <button class="small-btn highlight" onclick="loadDefaultToPos('p3', 'dps')" style="float: right;">载入系统推荐 (输出)</button>
+                </div>
+                <div id="settings-p3-batch"></div>
+                <div id="settings-p3-list"></div>
+            </div>
+
+            <div id="settings-area-p4" class="sub-tab-content">
+                <div style="margin-bottom: 10px;">
+                    <button class="small-btn green" onclick="toggleSettingsAll('p4', true)">全选所有</button>
+                    <button class="small-btn" onclick="toggleSettingsAll('p4', false)">清空所有</button>
+                    <button class="small-btn highlight" onclick="loadDefaultToPos('p4', 'dps')" style="float: right;">载入系统推荐 (输出)</button>
+                </div>
+                <div id="settings-p4-batch"></div>
+                <div id="settings-p4-list"></div>
+            </div>
         </div>
 
         <div class="controls-box">
             <h3>配置导出与同步</h3>
-            <button class="small-btn highlight" onclick="exportSettings()">生成并自动复制识别码</button>
+            <button class="small-btn highlight" onclick="exportSettings()">生成并自动复制识别码 </button>
             <textarea id="share-code-export" class="share-code-area" readonly placeholder="识别码生成区域..."></textarea>
             <div style="margin-top: 25px; border-top: 1px dashed #555; padding-top: 15px;">
-                <p style="font-size: 13px; color: #aaa; margin-bottom: 10px;">导入队友的识别码：</p>
+                <p style="font-size: 13px; color: #aaa; margin-bottom: 10px;">导入队友的识别码 ：</p>
                 <textarea id="share-code-import" class="share-code-area" placeholder="在此粘贴他人的识别码..."></textarea>
                 <button class="action-btn" onclick="importSettings()" style="width: 100%; margin-top: 15px; font-size: 16px;">覆盖并应用导入配置</button>
             </div>
@@ -286,7 +279,7 @@
         "联动": ["超天酱", "糖糖", "吉尔", "多萝西"] 
     };
     
-    //默认名单
+    //默认推荐名单
     const defaultSupportChars = ["商业之主", "古怪神探", "游戏大师", "看板娘", "史莱姆", "命运少女", "暗区少主", "风水师", "三神御主", "沼之蛟龙", "毒苹果", "超天酱", "吉尔"];
     const defaultDpsChars = ["社恐修女", "暗影忍者", "社员叔叔", "猩红辣妹", "看板娘", "垃圾箱", "肉蛋战车", "旗袍娘", "太刀使", "绿洲女王", "家政机器人", "午夜闪光", "网络魅影", "新人调查员", "机械超人", "三神御主", "枪匠", "小猎手", "沼之蛟龙", "毒苹果", "糖糖", "多萝西"];
 
@@ -297,33 +290,24 @@
     });
 
     let lastRolledMap = null;
-    const difficulties = ["简单", "困难", "噩梦", "疯狂"];
-	//预加载
-	function preloadAssets() {
-        console.log("正在后台预加载图片资源...");
-        const allImages = [
-            ...mapsData.map(m => m.image),
-            ...allCharObjects.map(c => c.image)
-        ];
-
-        allImages.forEach(src => {
-            const img = new Image();
-            img.src = src;
-        });
-        console.log(`已成功启动 ${allImages.length} 张图片的静默预加载`);
+    const difficulties = ["普通", "困难", "噩梦", "疯狂"];
+    
+    function preloadAssets() {
+        const allImages = [...mapsData.map(m => m.image), ...allCharObjects.map(c => c.image)];
+        allImages.forEach(src => { const img = new Image(); img.src = src; });
     }
-	
+    
     function getStoredData(key, defaultData) {
         try {
             const stored = JSON.parse(localStorage.getItem(key));
             return (stored && Array.isArray(stored) && stored.length > 0) ? stored : [...defaultData];
-        } catch(e) {
-            return [...defaultData];
-        }
+        } catch(e) { return [...defaultData]; }
     }
 
-    let customSupportChars = getStoredData('customSupport', defaultSupportChars);
-    let customDpsChars = getStoredData('customDps', defaultDpsChars);
+    let customP1 = getStoredData('customP1', defaultSupportChars);
+    let customP2 = getStoredData('customP2', defaultSupportChars);
+    let customP3 = getStoredData('customP3', defaultDpsChars);
+    let customP4 = getStoredData('customP4', defaultDpsChars);
 
     window.onscroll = () => {
         const topBtn = document.getElementById('back-to-top');
@@ -335,39 +319,36 @@
         mapsData.forEach((m, i) => {
             mapBox.innerHTML += `<div><input type="checkbox" id="m-${i}" class="map-checkbox tag-checkbox" value="${m.name}" checked><label for="m-${i}" class="tag-label">${m.name}</label></div>`;
         });
-        const charBox = document.getElementById('char-list-container');
-        const batchBox = document.getElementById('batch-btn-container');
-        Object.keys(allRawChars).forEach(phase => {
-            batchBox.innerHTML += `<button class="small-btn" onclick="togglePhase('${phase}')">选/不选 ${phase}</button>`;
-            let row = `<div class="row"><div class="row-header">${phase}</div><div class="row-content">`;
-            allCharObjects.filter(c => c.phase === phase).forEach(c => {
-                const id = `c-${c.name.replace(/\s/g, '')}`;
-                row += `<div><input type="checkbox" id="${id}" class="char-checkbox tag-checkbox" value="${c.name}" data-phase="${phase}"><label for="${id}" class="tag-label">${c.name}</label></div>`;
-            });
-            charBox.innerHTML += row + `</div></div>`;
-        });
         renderSettingsLists();
-		setTimeout(preloadAssets, 1000);
+        setTimeout(preloadAssets, 1000);
     };
 
     function renderSettingsLists() {
-        const sList = document.getElementById('settings-support-list');
-        const dList = document.getElementById('settings-dps-list');
-        const sBatch = document.getElementById('settings-support-batch');
-        const dBatch = document.getElementById('settings-dps-batch');
-        sList.innerHTML = ''; dList.innerHTML = ''; sBatch.innerHTML = ''; dBatch.innerHTML = '';
-        Object.keys(allRawChars).forEach(phase => {
-            sBatch.innerHTML += `<button class="small-btn" onclick="toggleSettingsPhase('${phase}', 'support')">选/不选 ${phase}</button>`;
-            dBatch.innerHTML += `<button class="small-btn" onclick="toggleSettingsPhase('${phase}', 'dps')">选/不选 ${phase}</button>`;
-            let sRow = `<div class="row"><div class="row-header">${phase}</div><div class="row-content">`;
-            let dRow = `<div class="row"><div class="row-header">${phase}</div><div class="row-content">`;
-            allCharObjects.filter(c => c.phase === phase).forEach(c => {
-                const sId = `s-set-${c.name}`; const dId = `d-set-${c.name}`;
-                sRow += `<div><input type="checkbox" id="${sId}" class="set-cb-support tag-checkbox" data-phase="${phase}" value="${c.name}" onchange="updatePreset('support','${c.name}',this.checked)" ${customSupportChars.includes(c.name)?'checked':''}><label for="${sId}" class="tag-label">${c.name}</label></div>`;
-                dRow += `<div><input type="checkbox" id="${dId}" class="set-cb-dps tag-checkbox" data-phase="${phase}" value="${c.name}" onchange="updatePreset('dps','${c.name}',this.checked)" ${customDpsChars.includes(c.name)?'checked':''}><label for="${dId}" class="tag-label">${c.name}</label></div>`;
+        const positions = ['p1', 'p2', 'p3', 'p4'];
+        positions.forEach(pos => {
+            const listContainer = document.getElementById(`settings-${pos}-list`);
+            const batchContainer = document.getElementById(`settings-${pos}-batch`);
+            listContainer.innerHTML = ''; batchContainer.innerHTML = '';
+            let currentArray = (pos==='p1')?customP1:(pos==='p2')?customP2:(pos==='p3')?customP3:customP4;
+            Object.keys(allRawChars).forEach(phase => {
+                batchContainer.innerHTML += `<button class="small-btn" onclick="toggleSettingsPhase('${phase}', '${pos}')">选/不选 ${phase}</button>`;
+                let row = `<div class="row"><div class="row-header">${phase}</div><div class="row-content">`;
+                allCharObjects.filter(c => c.phase === phase).forEach(c => {
+                    const id = `set-${pos}-${c.name}`;
+                    const isChecked = currentArray.includes(c.name) ? 'checked' : '';
+                    row += `<div><input type="checkbox" id="${id}" class="set-cb-${pos} tag-checkbox" data-phase="${phase}" value="${c.name}" onchange="updatePreset('${pos}','${c.name}',this.checked)" ${isChecked}><label for="${id}" class="tag-label">${c.name}</label></div>`;
+                });
+                listContainer.innerHTML += row + `</div></div>`;
             });
-            sList.innerHTML += sRow + `</div></div>`; dList.innerHTML += dRow + `</div></div>`;
         });
+    }
+
+    function loadDefaultToPos(pos, type) {
+        const arr = (type === 'support') ? [...defaultSupportChars] : [...defaultDpsChars];
+        if(pos === 'p1') customP1 = arr; else if(pos === 'p2') customP2 = arr; else if(pos === 'p3') customP3 = arr; else customP4 = arr;
+        localStorage.setItem(`custom${pos.toUpperCase()}`, JSON.stringify(arr));
+        renderSettingsLists();
+        showToast(`已为 ${pos.toUpperCase()} 载入系统推荐卡池！`);
     }
 
     function switchTab(id, btn) {
@@ -376,61 +357,57 @@
         document.getElementById(id).classList.add('active'); btn.classList.add('active');
     }
 
-    function syncPreset(type) {
-        const list = (type === 'support') ? customSupportChars : customDpsChars;
-        document.querySelectorAll('.char-checkbox').forEach(cb => cb.checked = list.includes(cb.value));
-        showToast(`已同步【${type==='support'?'辅助':'输出'}】自定义池`);
-    }
-
-    function syncDefault(type) {
-        const list = (type === 'support') ? defaultSupportChars : defaultDpsChars;
-        document.querySelectorAll('.char-checkbox').forEach(cb => cb.checked = list.includes(cb.value));
-        showToast(`已加载系统推荐【${type==='support'?'辅助':'输出'}】`);
+    function switchSettingsTab(pos, btn) {
+        document.querySelectorAll('.sub-tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`settings-area-${pos}`).classList.add('active');
+        btn.classList.add('active');
     }
 
     function toggleAllMaps(s) { document.querySelectorAll('.map-checkbox').forEach(c => c.checked = s); }
-    function toggleAllChars(s) { document.querySelectorAll('.char-checkbox').forEach(c => c.checked = s); }
-    function togglePhase(p) {
-        const cbs = document.querySelectorAll(`.char-checkbox[data-phase="${p}"]`);
+    function toggleSettingsAll(pos, s) {
+        document.querySelectorAll(`.set-cb-${pos}`).forEach(cb => { cb.checked = s; updatePreset(pos, cb.value, s, true); });
+        showToast(`已${s?'全选':'清空'} ${pos.toUpperCase()} 列表`);
+    }
+    function toggleSettingsPhase(phase, pos) {
+        const cbs = document.querySelectorAll(`.set-cb-${pos}[data-phase="${phase}"]`);
         const all = Array.from(cbs).every(c => c.checked);
-        cbs.forEach(c => c.checked = !all);
+        cbs.forEach(cb => { cb.checked = !all; updatePreset(pos, cb.value, !all, true); });
+        showToast(`已批量更新 ${pos.toUpperCase()} 的 ${phase}`);
     }
-    function toggleSettingsAll(type, s) {
-        document.querySelectorAll(`.set-cb-${type}`).forEach(cb => { cb.checked = s; updatePreset(type, cb.value, s, true); });
-        showToast(`已${s?'全选':'清空'}预设列表`);
-    }
-    function toggleSettingsPhase(p, t) {
-        const cbs = document.querySelectorAll(`.set-cb-${t}[data-phase="${p}"]`);
-        const all = Array.from(cbs).every(c => c.checked);
-        cbs.forEach(cb => { cb.checked = !all; updatePreset(t, cb.value, !all, true); });
-        showToast(`已批量更新 ${p}`);
-    }
-    function updatePreset(t, name, s, silent = false) {
-        let arr = (t === 'support') ? customSupportChars : customDpsChars;
+    function updatePreset(pos, name, isAdd, silent = false) {
+        let arr = (pos==='p1')?customP1:(pos==='p2')?customP2:(pos==='p3')?customP3:customP4;
         const i = arr.indexOf(name);
-        if(s && i === -1) arr.push(name); else if(!s && i > -1) arr.splice(i, 1);
-        localStorage.setItem(t === 'support' ? 'customSupport' : 'customDps', JSON.stringify(arr));
+        if(isAdd && i === -1) arr.push(name); else if(!isAdd && i > -1) arr.splice(i, 1);
+        localStorage.setItem(`custom${pos.toUpperCase()}`, JSON.stringify(arr));
         if(!silent) showToast('设置已自动保存');
     }
+    
     function exportSettings() {
         const area = document.getElementById('share-code-export');
-        const code = btoa(unescape(encodeURIComponent(JSON.stringify({s: customSupportChars, d: customDpsChars}))));
-        area.value = code;
-        area.select();
+        const code = btoa(unescape(encodeURIComponent(JSON.stringify({ p1: customP1, p2: customP2, p3: customP3, p4: customP4 }))));
+        area.value = code; area.select();
         try { navigator.clipboard.writeText(code).then(() => showToast('识别码已复制！')); } catch (e) { document.execCommand('copy'); showToast('识别码已生成！'); }
     }
+    
     function importSettings() {
         try {
             const raw = document.getElementById('share-code-import').value.trim();
             if(!raw) return showToast('请输入识别码', true);
             const data = JSON.parse(decodeURIComponent(escape(atob(raw))));
-            customSupportChars = data.s; customDpsChars = data.d;
-            localStorage.setItem('customSupport', JSON.stringify(customSupportChars));
-            localStorage.setItem('customDps', JSON.stringify(customDpsChars));
+            if(data.s && data.d && !data.p1) {
+                customP1 = data.s; customP2 = data.s; customP3 = data.d; customP4 = data.d;
+                showToast('检测到旧版配置，已智能转换！');
+            } else if (data.p1) {
+                customP1 = data.p1; customP2 = data.p2; customP3 = data.p3; customP4 = data.p4;
+                showToast('导入成功！');
+            }
+            localStorage.setItem('customP1', JSON.stringify(customP1)); localStorage.setItem('customP2', JSON.stringify(customP2));
+            localStorage.setItem('customP3', JSON.stringify(customP3)); localStorage.setItem('customP4', JSON.stringify(customP4));
             renderSettingsLists();
-            showToast('导入成功！');
         } catch(e) { showToast('识别码无效', true); }
     }
+    
     function showToast(m, err=false) {
         const t = document.getElementById('toast');
         t.textContent = m; t.style.background = err ? '#D32F2F' : '#E6007E';
@@ -439,20 +416,18 @@
 
     function runRouletteAnimation(btn, boxId, txtId, imgId, options, sP, fP, onComplete = null, formatName = null) {
         const box = document.getElementById(boxId), txt = document.getElementById(txtId), img = document.getElementById(imgId);
-        if(!options.length) return showToast("未勾选任何选项", true);
+        if(!options.length) return showToast("预设池为空！", true);
         btn.disabled = true; box.classList.remove("locked"); img.classList.add("visible");
-        let d = 70;
+        let d = 120;
         const tick = () => {
             const item = options[Math.floor(Math.random()*options.length)];
             const displayName = formatName ? formatName(item.name) : item.name;
             txt.innerText = sP + displayName; img.src = item.image;
-            if(d < 450) { 
-                d *= 1.12; setTimeout(tick, d); 
-            } else { 
-                box.classList.add("locked"); 
-                txt.innerText = fP + displayName; 
-                btn.disabled = false; 
-                if(onComplete) onComplete(item.name);
+            if(d < 450) { d *= 1.12; setTimeout(tick, d); } 
+            else { 
+                box.classList.add("locked"); img.src = item.image;
+                txt.innerText = fP + (formatName ? formatName(item.name) : item.name); 
+                btn.disabled = false; if(onComplete) onComplete(item.name);
             }
         };
         tick();
@@ -461,96 +436,92 @@
     function randomizeMap(b) {
         const names = Array.from(document.querySelectorAll('.map-checkbox:checked')).map(c => c.value);
         let availableMaps = mapsData.filter(m => names.includes(m.name));
-        
-        const noRepeat = document.getElementById('map-no-repeat').checked;
-        if (noRepeat && availableMaps.length > 1 && lastRolledMap) {
+        if (document.getElementById('map-no-repeat').checked && availableMaps.length > 1 && lastRolledMap) {
             availableMaps = availableMaps.filter(m => m.name !== lastRolledMap);
         }
-
-        const addDifficulty = document.getElementById('map-difficulty').checked;
         const formatName = (baseName) => {
-            if (!addDifficulty) return baseName;
-            const diff = difficulties[Math.floor(Math.random() * difficulties.length)];
-            return baseName + "·" + diff;
+            if (!document.getElementById('map-difficulty').checked) return baseName;
+            return baseName + "·" + difficulties[Math.floor(Math.random() * difficulties.length)];
         };
-
-        const onComplete = (finalBaseName) => {
-            lastRolledMap = finalBaseName; 
-        };
-
-        runRouletteAnimation(b, 'map-result', 'map-result-text', 'map-result-image', availableMaps, "正在选择：", "随机完毕：", onComplete, formatName);
+        runRouletteAnimation(b, 'map-result', 'map-result-text', 'map-result-image', availableMaps, "正在选择：", "随机完毕：", (n) => { lastRolledMap = n; }, formatName);
     }
     
     function randomizeChar(b) {
-        const names = Array.from(document.querySelectorAll('.char-checkbox:checked')).map(c => c.value);
-        runRouletteAnimation(b, 'char-result', 'char-result-text', 'char-result-image', allCharObjects.filter(c => names.includes(c.name)), "正在选择：", "随机完毕：");
+        const selectedPos = document.querySelector('input[name="single-role-pos"]:checked').value;
+        let arr = (selectedPos==='p1')?customP1:(selectedPos==='p2')?customP2:(selectedPos==='p3')?customP3:customP4;
+        const pool = allCharObjects.filter(c => arr.includes(c.name));
+        if(pool.length === 0) return showToast(`【${selectedPos.toUpperCase()} 角色池】为空！`, true);
+        runRouletteAnimation(b, 'char-result', 'char-result-text', 'char-result-image', pool, "正在选择：", "随机完毕：");
     }
-	
-    function randomizeTeam(btn) {
-        const supportPool = allCharObjects.filter(c => customSupportChars.includes(c.name));
-        const dpsPool = allCharObjects.filter(c => customDpsChars.includes(c.name));
 
-        //统计当前四个位置需要的辅助和输出数量（先计算腐竹输出的总数，为后续和对数量做准备，
-        let reqSupport = 0;
-        let reqDps = 0;
-        const roles = [1, 2, 3, 4].map(i => {
-            const r = document.getElementById(`p${i}-role`).value;
-            if (r === 'support') reqSupport++;
-            else reqDps++;
-            return r;
+    function randomizeTeam(btn) {
+        const poolData = [
+            { id: "p1", name: "1P", pool: allCharObjects.filter(c => customP1.includes(c.name)) },
+            { id: "p2", name: "2P", pool: allCharObjects.filter(c => customP2.includes(c.name)) },
+            { id: "p3", name: "3P", pool: allCharObjects.filter(c => customP3.includes(c.name)) },
+            { id: "p4", name: "4P", pool: allCharObjects.filter(c => customP4.includes(c.name)) }
+        ];
+
+        //空池验证
+        for(let p of poolData) {
+            if(p.pool.length === 0) return showToast(`【${p.name} 角色池】当前为空！`, true);
+        }
+
+        //随机性检测
+        let singleWarnings = [];
+        poolData.forEach(p => {
+            if(p.pool.length === 1) {
+                singleWarnings.push(`${p.name} 随机池只选取了：【${p.pool[0].name}】`);
+            }
         });
 
-        //数量校验 
-		
-        if(supportPool.length < reqSupport) return showToast(`【辅助角色池】数量不足！需要${reqSupport}名，当前预设仅选了${supportPool.length}名。`, true);
-        if(dpsPool.length < reqDps) return showToast(`【输出角色池】数量不足！需要${reqDps}名，当前预设仅选了${dpsPool.length}名。`, true);
+        if(singleWarnings.length > 0) {
+            const confirmMsg = "检测到以下随机池缺乏随机性：\n\n" + 
+                               singleWarnings.join("\n") + 
+                               "\n\n是否继续随机？\n(取消将跳转至预设页面进行调整)";
+            
+            if(!confirm(confirmMsg)) {
+                // 跳转逻辑
+                switchTab('tab-settings', document.getElementById('btn-settings'));
+                // 自动定位到第一个出现问题的P位子页签
+                const firstIssuePos = poolData.find(p => p.pool.length === 1).id;
+                switchSettingsTab(firstIssuePos, document.getElementById('sbtn-' + firstIssuePos));
+                return; // 终止随机
+            }
+        }
 
         btn.disabled = true;
-
         const slots = [1, 2, 3, 4].map(i => {
-            const role = roles[i-1];
-            const pool = (role === 'support') ? supportPool : dpsPool;
             const box = document.getElementById(`team-slot-${i}`);
             const img = document.getElementById(`team-img-${i}`);
             const txt = document.getElementById(`team-txt-${i}`);
             const statusTxt = document.getElementById(`team-status-${i}`);
-            
-            box.classList.remove('locked');
-            img.classList.add('visible');
-            return { pool, box, img, txt, statusTxt, id: i };
+            box.classList.remove('locked'); img.classList.add('visible');
+            return { pool: poolData[i-1].pool, box, img, txt, statusTxt, id: i };
         });
 
-        let d = 70;
-
+        let d = 120;
         const tick = () => {
-
             let usedNames = new Set(); 
-
             slots.forEach(s => {
-                //剔除已被选中的
                 let available = s.pool.filter(item => !usedNames.has(item.name));
+                if (available.length === 0) available = s.pool; 
                 const item = available[Math.floor(Math.random() * available.length)];
-                
-                usedNames.add(item.name); //被占用
-                
-                s.img.src = item.image;
-                s.txt.innerText = item.name;
+                usedNames.add(item.name);
+                s.img.src = item.image; s.txt.innerText = item.name;
                 s.statusTxt.innerText = `${s.id}P 正在选择...`;
                 s.finalItem = item;
             });
 
-            if(d < 450) { 
-                d *= 1.12; // 逐渐减速
-                setTimeout(tick, d); 
-            } else { 
-                // 动画结束，锁定状态
+            if(d < 450) { d *= 1.12; setTimeout(tick, d); } 
+            else { 
                 slots.forEach(s => {
                     s.box.classList.add('locked');
-                    s.txt.innerText = s.finalItem.name;
-                    s.statusTxt.innerText = `${s.id}P 随机完毕`; // 最终状态文字
+                    s.img.src = s.finalItem.image; s.txt.innerText = s.finalItem.name;
+                    s.statusTxt.innerText = `${s.id}P 随机完毕`; 
                 });
                 btn.disabled = false;
-                showToast("队伍组建完毕！");
+                showToast("全队随机完毕！");
             }
         };
         tick();
