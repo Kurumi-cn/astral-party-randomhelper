@@ -136,6 +136,7 @@
                 <button class="small-btn" style="margin-bottom: 0;" onclick="toggleAllMaps(false)">清空地图选择</button>
                 <label style="font-size: 14px; cursor: pointer; color: #ddd;"><input type="checkbox" id="map-no-repeat"> 避免地图重复</label>
                 <label style="font-size: 14px; cursor: pointer; color: #ddd;"><input type="checkbox" id="map-difficulty"> 增加随机难度</label>
+                <label style="font-size: 14px; cursor: pointer; color: #ddd;"><input type="checkbox" id="map-random-route"> 增加随机线路</label>
             </div>
             <div class="row">
                 <div class="row-header">全部地图</div>
@@ -421,12 +422,12 @@
         let d = 120;
         const tick = () => {
             const item = options[Math.floor(Math.random()*options.length)];
-            const displayName = formatName ? formatName(item.name) : item.name;
+            const displayName = formatName ? formatName(item) : item.name;
             txt.innerText = sP + displayName; img.src = item.image;
             if(d < 450) { d *= 1.12; setTimeout(tick, d); } 
             else { 
                 box.classList.add("locked"); img.src = item.image;
-                txt.innerText = fP + (formatName ? formatName(item.name) : item.name); 
+                txt.innerText = fP + (formatName ? formatName(item) : item.name); 
                 btn.disabled = false; if(onComplete) onComplete(item.name);
             }
         };
@@ -439,10 +440,41 @@
         if (document.getElementById('map-no-repeat').checked && availableMaps.length > 1 && lastRolledMap) {
             availableMaps = availableMaps.filter(m => m.name !== lastRolledMap);
         }
-        const formatName = (baseName) => {
-            if (!document.getElementById('map-difficulty').checked) return baseName;
-            return baseName + "·" + difficulties[Math.floor(Math.random() * difficulties.length)];
+        const useRandomRoute = document.getElementById('map-random-route').checked;
+        if (useRandomRoute) {
+            const weightedPool = [];
+            availableMaps.forEach(map => {
+                if (map.name === '园林中庭') {
+                    ['孔雀线', '鸳鸯线', '深入调查'].forEach(route => {
+                        weightedPool.push({ ...map, routeSuffix: route });
+                        weightedPool.push({ ...map, routeSuffix: route });
+                    });
+                } else if (map.name === '龙宫游乐园') {
+                    ['大雷线', '小雷线'].forEach(route => {
+                        weightedPool.push({ ...map, routeSuffix: route });
+                        weightedPool.push({ ...map, routeSuffix: route });
+                        weightedPool.push({ ...map, routeSuffix: route });
+                    });
+                } else {
+                    for(let i = 0; i < 6; i++) {
+                        weightedPool.push(map);
+                    }
+                }
+            });
+            availableMaps = weightedPool;
+        }
+        
+        const formatName = (item) => {
+            let name = item.name;
+            if (useRandomRoute && item.routeSuffix) {
+                name += `-${item.routeSuffix}`;
+            }
+            if (document.getElementById('map-difficulty').checked) {
+                name += "·" + difficulties[Math.floor(Math.random() * difficulties.length)];
+            }
+            return name;
         };
+        
         runRouletteAnimation(b, 'map-result', 'map-result-text', 'map-result-image', availableMaps, "正在选择：", "随机完毕：", (n) => { lastRolledMap = n; }, formatName);
     }
     
@@ -451,7 +483,7 @@
         let arr = (selectedPos==='p1')?customP1:(selectedPos==='p2')?customP2:(selectedPos==='p3')?customP3:customP4;
         const pool = allCharObjects.filter(c => arr.includes(c.name));
         if(pool.length === 0) return showToast(`【${selectedPos.toUpperCase()} 角色池】为空！`, true);
-        runRouletteAnimation(b, 'char-result', 'char-result-text', 'char-result-image', pool, "正在选择：", "随机完毕：");
+        runRouletteAnimation(b, 'char-result', 'char-result-text', 'char-result-image', pool, "正在选择：", "随机完毕：", null, (item) => item.name);
     }
 
     function randomizeTeam(btn) {
